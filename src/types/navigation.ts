@@ -1,0 +1,1 @@
+export type PageId = 'dashboard' | 'profile' | 'users' | 'groups' | 'audits' | 'menus' | 'menu-groups' | 'message-management' | 'correspondents' | 'parameter' | 'sftp-config' | 'scheduler-config' | 'sftp-log' | 'transaction-log' | 'sanction-list' | 'sanction-filtering' | 'mx-mt-converter';

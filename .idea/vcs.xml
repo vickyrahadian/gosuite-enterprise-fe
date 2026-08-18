@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="VcsDirectoryMappings">
-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../actimize-integrator" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../bni-newyork" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../gosuite-enterprise" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../personal-web" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../screening-api" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../web-foto-backup" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../web-waiver" vcs="Git" />
   </component>
 </project>

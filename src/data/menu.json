@@ -1,0 +1,77 @@
+//[
+//  {
+//    "id": "system-management",
+//    "label": "System Management",
+//    "icon": "\u2699",
+//    "children": [
+//      {
+//        "id": "user-management",
+//        "label": "User Management",
+//        "page": "users"
+//      },
+//      {
+//        "id": "group-management",
+//        "label": "Group Management",
+//        "page": "groups"
+//      },
+//      {
+//        "id": "audit-logs",
+//        "label": "Audit Logs",
+//        "page": "audits"
+//      },
+//      {
+//        "id": "menu-management",
+//        "label": "Menu Management"
+//      },
+//      {
+//        "id": "menu-group-management",
+//        "label": "Menu Group Management"
+//      }
+//    ]
+//  },
+//  {
+//    "id": "swift",
+//    "label": "SWIFT",
+//    "icon": "\u21c4",
+//    "children": [
+//      {
+//        "id": "swift-incoming",
+//        "label": "Incoming"
+//      },
+//      {
+//        "id": "swift-outgoing",
+//        "label": "Outgoing"
+//      }
+//    ]
+//  },
+//  {
+//    "id": "actimize-integrator",
+//    "label": "Actimize Integrator",
+//    "icon": "\u25c7",
+//    "children": [
+//      {
+//        "id": "sanction-filtering",
+//        "label": "Sanction Filtering"
+//      },
+//      {
+//        "id": "transaction-monitoring",
+//        "label": "Transaction Monitoring"
+//      }
+//    ]
+//  },
+//  {
+//    "id": "report",
+//    "label": "Report",
+//    "icon": "\u25a4",
+//    "children": [
+//      {
+//        "id": "user-activity",
+//        "label": "User Activity"
+//      },
+//      {
+//        "id": "transaction-history",
+//        "label": "Transaction History"
+//      }
+//    ]
+//  }
+//]

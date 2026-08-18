@@ -1,0 +1,108 @@
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { DataTable, DEFAULT_PAGE_SIZE, type DataTableColumn } from '../../components/DataTable';
+import { FormModal } from '../../components/FormModal';
+import { IconButton } from '../../components/IconButton';
+import { NotificationModal, type NotificationVariant } from '../../components/NotificationModal';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { ApiRequestError } from '../../services/api';
+import { appParameterService } from './appParameterService';
+import type { AppParameter, AppParameterPayload } from './types';
+
+const MAX_KEY_LENGTH = 255;
+const MAX_VALUE_LENGTH = 4000;
+type Notification = { variant: NotificationVariant; title: string; message: string };
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof ApiRequestError) {
+    if (error.code === 'APP_PARAMETER_KEY_CONFLICT') return error.message || 'The parameter key is already in use.';
+    if (error.code === 'APP_PARAMETER_IN_USE') return error.message || 'This parameter is still in use and cannot be deleted.';
+    if (error.status === 404) return 'App parameter not found. Please refresh the data.';
+    if (error.status === 400) return error.message || Object.values(error.validationErrors ?? {})[0] || 'The app parameter data is invalid.';
+    return error.message;
+  }
+  return 'Unable to connect to the backend. Check the API address and server connection.';
+}
+
+export function AppParameterManagementPage() {
+  useDocumentTitle('Parameter | BNI');
+  const [items, setItems] = useState<AppParameter[]>([]);
+  const [searchKey, setSearchKey] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
+  const [parameterKey, setParameterKey] = useState('');
+  const [parameterValue, setParameterValue] = useState('');
+  const [editing, setEditing] = useState<AppParameter | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<AppParameter | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [notification, setNotification] = useState<Notification | null>(null);
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(DEFAULT_PAGE_SIZE);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  const loadItems = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    try {
+      const result = await appParameterService.getAll({ parameterKey: activeSearch, page, size, sort: 'id,asc' }, signal);
+      setItems(result.content); setPage(result.number); setSize(result.size); setTotalElements(result.totalElements); setTotalPages(result.totalPages);
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) setNotification({ variant: 'error', title: 'Unable to Load Parameters', message: getErrorMessage(error) });
+    } finally { if (!signal?.aborted) setIsLoading(false); }
+  }, [activeSearch, page, size]);
+
+  useEffect(() => { const controller = new AbortController(); void loadItems(controller.signal); return () => controller.abort(); }, [loadItems]);
+
+  const closeForm = () => { setIsFormOpen(false); setEditing(null); setParameterKey(''); setParameterValue(''); };
+  const openAdd = () => { setEditing(null); setParameterKey(''); setParameterValue(''); setNotification(null); setIsFormOpen(true); };
+  const openEdit = (item: AppParameter) => { setEditing(item); setParameterKey(item.parameterKey); setParameterValue(item.parameterValue ?? ''); setNotification(null); setIsFormOpen(true); };
+  const applySearch = (event: FormEvent) => { event.preventDefault(); setPage(0); setActiveSearch(searchKey.trim()); };
+  const clearSearch = () => { setSearchKey(''); setPage(0); setActiveSearch(''); };
+
+  const save = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const normalizedKey = parameterKey.trim();
+    if (!normalizedKey) { setNotification({ variant: 'error', title: 'Invalid Parameter', message: 'Parameter key is required.' }); return; }
+    const payload: AppParameterPayload = { parameterKey: normalizedKey, parameterValue: parameterValue || null };
+    setIsSaving(true);
+    try {
+      if (editing) await appParameterService.update(editing.id, payload); else await appParameterService.create(payload);
+      const wasEditing = Boolean(editing);
+      closeForm();
+      setNotification({ variant: 'success', title: wasEditing ? 'Parameter Updated' : 'Parameter Created', message: `The app parameter was ${wasEditing ? 'updated' : 'created'} successfully.` });
+      await loadItems();
+    } catch (error) { setNotification({ variant: 'error', title: editing ? 'Update Failed' : 'Creation Failed', message: getErrorMessage(error) }); }
+    finally { setIsSaving(false); }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try { await appParameterService.remove(deleteTarget.id); setDeleteTarget(null); setNotification({ variant: 'success', title: 'Parameter Deleted', message: 'The app parameter was deleted successfully.' }); await loadItems(); }
+    catch (error) { setDeleteTarget(null); setNotification({ variant: 'error', title: 'Deletion Failed', message: getErrorMessage(error) }); }
+    finally { setIsDeleting(false); }
+  };
+
+  const columns: DataTableColumn<AppParameter>[] = [
+    { key: 'id', header: 'ID', render: (item) => item.id },
+    { key: 'parameterKey', header: 'Parameter Key', render: (item) => item.parameterKey },
+    { key: 'parameterValue', header: 'Value', render: (item) => <span className="app-parameter-value" title={item.parameterValue ?? undefined}>{item.parameterValue || '—'}</span> },
+    { key: 'updatedAt', header: 'Updated', render: (item) => formatDate(item.updatedAt) },
+    { key: 'actions', header: 'Actions', align: 'right', render: (item) => <div className="row-actions"><IconButton label={`Edit ${item.parameterKey}`} type="button" onClick={() => openEdit(item)} icon={<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20h4l11-11-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg>} /><IconButton label={`Delete ${item.parameterKey}`} variant="danger" type="button" onClick={() => setDeleteTarget(item)} icon={<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>} /></div> },
+  ];
+
+  return <div className="crud-page app-parameter-management-page">
+    <header className="page-header"><p>Parameter Management</p><h1>Parameter</h1></header>
+    <section className="management-card" aria-labelledby="app-parameter-search-title"><div className="section-heading"><h2 id="app-parameter-search-title">Search Parameters</h2></div><form className="search-form" onSubmit={applySearch}><label htmlFor="app-parameter-search">Parameter key</label><div className="search-form__controls"><input id="app-parameter-search" type="search" value={searchKey} onChange={(event) => setSearchKey(event.target.value)} maxLength={MAX_KEY_LENGTH} placeholder="Search by parameter key" autoComplete="off" /><IconButton className="icon-button--primary search-form__icon-button" label="Search parameters" type="submit" disabled={isLoading} icon={<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/></svg>} /><IconButton className="search-form__icon-button" label="Clear search" type="button" onClick={clearSearch} disabled={isLoading && !searchKey} icon={<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 15 8-9 7 6-7 8H8l-4-3Z"/><path d="m9 12 6 5M12 20h8"/></svg>} /></div></form></section>
+    <section className="management-card" aria-labelledby="app-parameter-list-title"><div className="section-heading"><h2 id="app-parameter-list-title">Parameter List</h2><div className="section-heading__actions"><span>{totalElements} {totalElements === 1 ? 'parameter' : 'parameters'}</span><IconButton label="Refresh parameters" type="button" onClick={() => void loadItems()} disabled={isLoading} icon={<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 7v5h-5"/><path d="M18.2 16a8 8 0 1 1 .8-9l1 5"/></svg>} /><IconButton className="icon-button--primary" label="Add Parameter" type="button" onClick={openAdd} icon={<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>} /></div></div><DataTable rows={items} columns={columns} getRowKey={(item) => item.id} ariaLabel="App parameter list" isLoading={isLoading} loadingMessage="Loading parameters..." emptyMessage="No parameters found." serverPagination={{ currentPage: page + 1, totalPages, totalRows: totalElements, pageSize: size, onPageChange: (next) => setPage(next - 1), onPageSizeChange: (next) => { setSize(next); setPage(0); } }} /></section>
+    <FormModal isOpen={isFormOpen} title={editing ? 'Edit App Parameter' : 'Add App Parameter'} submitLabel={editing ? 'Save Changes' : 'Add Parameter'} isSubmitting={isSaving} onSubmit={save} onClose={closeForm}><div className="form-grid"><div className="form-field"><label htmlFor="app-parameter-key">Parameter key</label><input id="app-parameter-key" value={parameterKey} onChange={(event) => setParameterKey(event.target.value)} maxLength={MAX_KEY_LENGTH} required autoFocus disabled={isSaving} autoComplete="off" /><small>{parameterKey.length}/{MAX_KEY_LENGTH} characters</small></div><div className="form-field"><label htmlFor="app-parameter-value">Parameter value <span className="optional-label">(optional)</span></label><textarea id="app-parameter-value" value={parameterValue} onChange={(event) => setParameterValue(event.target.value)} maxLength={MAX_VALUE_LENGTH} rows={6} disabled={isSaving} /><small>{parameterValue.length}/{MAX_VALUE_LENGTH} characters</small></div></div></FormModal>
+    <NotificationModal isOpen={deleteTarget !== null} variant="confirm" title="Delete App Parameter" message={`Are you sure you want to delete "${deleteTarget?.parameterKey ?? ''}"?`} primaryLabel="Delete" secondaryLabel="Cancel" isProcessing={isDeleting} onPrimary={() => void confirmDelete()} onClose={() => setDeleteTarget(null)} />
+    <NotificationModal isOpen={notification !== null} variant={notification?.variant ?? 'success'} title={notification?.title ?? ''} message={notification?.message ?? ''} onPrimary={() => setNotification(null)} onClose={() => setNotification(null)} />
+  </div>;
+}
