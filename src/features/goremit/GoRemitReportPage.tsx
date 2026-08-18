@@ -3,18 +3,19 @@ import { DataTable, type DataTableColumn } from '../../components/DataTable';
 import { IconButton } from '../../components/IconButton';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ApiRequestError } from '../../services/api';
-import { goRemitService, type GoRemitReport } from './goRemitService';
+import { goRemitService, type GoRemitFilters, type GoRemitReport } from './goRemitService';
 import type { GoRemitRow } from './types';
 
-type Props = { report: GoRemitReport; title: string };
-type DateFilter = { start: string; end: string };
+export type GoRemitFilterField = { key: string; label: string; type?: 'text' | 'number' };
+type Props = { report: GoRemitReport; title: string; filterFields: GoRemitFilterField[] };
+type ReportFilter = { start: string; end: string } & GoRemitFilters;
 
 const toDateInput = (date: Date) => {
   const pad = (value: number) => String(value).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 };
 
-const getDefaultDates = (): DateFilter => {
+const getDefaultDates = (): ReportFilter => {
   const now = new Date();
   const today = toDateInput(now);
   return {
@@ -56,10 +57,14 @@ const downloadExcel = (title: string, rows: GoRemitRow[]) => {
   URL.revokeObjectURL(url);
 };
 
-export function GoRemitReportPage({ report, title }: Props) {
+export function GoRemitReportPage({ report, title, filterFields }: Props) {
   useDocumentTitle(`${title} | BNI`);
-  const [form, setForm] = useState<DateFilter>(getDefaultDates);
-  const [activeFilter, setActiveFilter] = useState<DateFilter>(getDefaultDates);
+  const getDefaultFilters = useCallback((): ReportFilter => ({
+    ...getDefaultDates(),
+    ...Object.fromEntries(filterFields.map(({ key }) => [key, ''])),
+  }), [filterFields]);
+  const [form, setForm] = useState<ReportFilter>(getDefaultFilters);
+  const [activeFilter, setActiveFilter] = useState<ReportFilter>(getDefaultFilters);
   const [rows, setRows] = useState<GoRemitRow[]>([]);
   const [count, setCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,7 +74,7 @@ export function GoRemitReportPage({ report, title }: Props) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await goRemitService.getReport(report, activeFilter.start, addOneDay(activeFilter.end), signal);
+      const response = await goRemitService.getReport(report, { ...activeFilter, end: addOneDay(activeFilter.end) }, signal);
       setRows(response.data);
       setCount(response.count);
     } catch (requestError) {
@@ -100,7 +105,7 @@ export function GoRemitReportPage({ report, title }: Props) {
   };
 
   const reset = () => {
-    const defaults = getDefaultDates();
+    const defaults = getDefaultFilters();
     setForm(defaults);
     setActiveFilter(defaults);
     setError(null);
@@ -113,6 +118,10 @@ export function GoRemitReportPage({ report, title }: Props) {
       <form className="goremit-filter-grid" onSubmit={submit}>
         <div className="form-field"><label htmlFor={`${report}-start`}>From</label><input id={`${report}-start`} type="date" required max={form.end || undefined} value={form.start} onChange={(event) => setForm((current) => ({ ...current, start: event.target.value }))} /></div>
         <div className="form-field"><label htmlFor={`${report}-end`}>To</label><input id={`${report}-end`} type="date" required min={form.start || undefined} value={form.end} onChange={(event) => setForm((current) => ({ ...current, end: event.target.value }))} /></div>
+        {filterFields.map((field) => <div className="form-field" key={field.key}>
+          <label htmlFor={`${report}-${field.key}`}>{field.label}</label>
+          <input id={`${report}-${field.key}`} type={field.type ?? 'text'} step={field.type === 'number' ? 'any' : undefined} value={form[field.key] ?? ''} onChange={(event) => setForm((current) => ({ ...current, [field.key]: event.target.value }))} />
+        </div>)}
         <div className="goremit-filter-actions">
           <IconButton className="icon-button--primary search-form__icon-button" label="Apply report filters" type="submit" disabled={isLoading} icon={<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/></svg>} />
           <IconButton className="search-form__icon-button" label="Reset report filters" type="button" onClick={reset} disabled={isLoading} icon={<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 4v6h6"/><path d="M5.5 15a8 8 0 1 0 .5-7l-2 2"/></svg>} />

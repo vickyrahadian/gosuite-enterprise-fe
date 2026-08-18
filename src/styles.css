@@ -127,8 +127,8 @@ main { background: #f4f8f8; display: flex; flex-direction: column; min-width: 0;
 .transaction-log-filter-grid { display: grid; gap: 14px; }
 .transaction-log-filter-fields { display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .transaction-log-filter-actions { display: flex; gap: 8px; justify-content: flex-end; }
-.goremit-filter-grid { align-items: end; display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; }
-.goremit-filter-actions { display: flex; gap: 8px; }
+.goremit-filter-grid { align-items: end; display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.goremit-filter-actions { display: flex; gap: 8px; grid-column: 1 / -1; justify-content: flex-end; }
 .transaction-log-page .table-wrapper { border: 1px solid #d7e8eb; border-radius: 6px; }
 .transaction-log-page table { min-width: 1320px; }
 .transaction-log-page th { white-space: nowrap; }
