@@ -29,6 +29,12 @@ const pageAliases: Record<string, PageId> = {
   'sanction-list': 'sanction-list',
   'sanction-filtering': 'sanction-filtering',
   'mx-mt-converter': 'mx-mt-converter',
+  'goremit-itr-to-otr': 'goremit-itr-to-otr',
+  'itr-to-otr': 'goremit-itr-to-otr',
+  'goremit-otr': 'goremit-otr',
+  'otr-non-swift': 'goremit-otr',
+  'goremit-otr-direct': 'goremit-otr-direct',
+  'otr-direct': 'goremit-otr-direct',
 };
 
 function getMenuPage(menu: Menu): PageId | undefined {

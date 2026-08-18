@@ -127,6 +127,8 @@ main { background: #f4f8f8; display: flex; flex-direction: column; min-width: 0;
 .transaction-log-filter-grid { display: grid; gap: 14px; }
 .transaction-log-filter-fields { display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .transaction-log-filter-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.goremit-filter-grid { align-items: end; display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; }
+.goremit-filter-actions { display: flex; gap: 8px; }
 .transaction-log-page .table-wrapper { border: 1px solid #d7e8eb; border-radius: 6px; }
 .transaction-log-page table { min-width: 1320px; }
 .transaction-log-page th { white-space: nowrap; }
@@ -397,7 +399,7 @@ tbody tr:hover { background: #f8fbfb; }
 @media (max-width: 720px) {
   .profile-layout, .profile-details { grid-template-columns: 1fr; }
   .audit-filter-grid { grid-template-columns: 1fr; }
-  .message-filter-grid, .message-detail-grid, .correspondent-search-grid, .correspondent-form-grid, .correspondent-picker__filters, .sftp-config-form-grid, .scheduler-config-filter-grid, .sanction-filter-grid, .filtering-request-filter-grid, .filtering-detail-grid, .transaction-log-filter-fields, .transaction-log-summary, .transaction-event__route, .conversion-filter__fields, .conversion-detail-grid { grid-template-columns: 1fr; }
+  .message-filter-grid, .message-detail-grid, .correspondent-search-grid, .correspondent-form-grid, .correspondent-picker__filters, .sftp-config-form-grid, .scheduler-config-filter-grid, .sanction-filter-grid, .filtering-request-filter-grid, .filtering-detail-grid, .transaction-log-filter-fields, .transaction-log-summary, .transaction-event__route, .conversion-filter__fields, .conversion-detail-grid, .goremit-filter-grid { grid-template-columns: 1fr; }
   .filtering-detail-grid__wide { grid-column: auto; }
   .initial-filtering-request-layout { grid-template-columns: 1fr; }
   .initial-filtering-request-side { position: static; }

@@ -21,6 +21,7 @@ import { SanctionListManagementPage } from './features/sanction-list/SanctionLis
 import { FilteringRequestManagementPage } from './features/filtering-requests/FilteringRequestManagementPage';
 import { MessageConversionPage } from './features/message-conversions/MessageConversionPage';
 import { ProfilePage } from './features/profile/ProfilePage';
+import { GoRemitItrToOtrPage, GoRemitOtrDirectPage, GoRemitOtrPage } from './features/goremit/GoRemitPages';
 import { AdminLayout } from './layouts/AdminLayout';
 import { DashboardPage } from './pages/DashboardPage';
 import type { PageId } from './types/navigation';
@@ -112,6 +113,12 @@ export default function App() {
                           ? <FilteringRequestManagementPage />
                           : currentPage === 'mx-mt-converter'
                             ? <MessageConversionPage />
+                            : currentPage === 'goremit-itr-to-otr'
+                              ? <GoRemitItrToOtrPage />
+                              : currentPage === 'goremit-otr'
+                                ? <GoRemitOtrPage />
+                                : currentPage === 'goremit-otr-direct'
+                                  ? <GoRemitOtrDirectPage />
                           : <DashboardPage />;
 
   return (
